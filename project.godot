@@ -14,6 +14,8 @@ window/size/viewport_height=560
 window/stretch/mode="viewport"
 window/stretch/scale_mode="integer"
 
+[autoload]
+
 Game="*res://src/autoload/game.gd"
 
 [editor_plugins]
