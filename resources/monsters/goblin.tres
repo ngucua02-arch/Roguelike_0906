@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MonsterDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/monster_def.gd" id="1_gob"]
+
+[resource]
+script = ExtResource("1_gob")
+display_name = "哥布林"
+max_hp = 30
+move_speed = 1.2
+armor = 0
+gold_drop = 3

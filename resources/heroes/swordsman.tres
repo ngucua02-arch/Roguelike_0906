@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="HeroDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/hero_def.gd" id="1_hero"]
+
+[resource]
+script = ExtResource("1_hero")
+display_name = "剑士"
+attack_damage = 12
+attack_interval = 0.8
+range_tiles = 1.5
