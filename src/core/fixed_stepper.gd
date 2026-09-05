@@ -16,6 +16,6 @@ func add_delta(delta: float) -> int:
 	while _accumulator >= step_interval and steps < max_steps_per_frame:
 		_accumulator -= step_interval
 		steps += 1
-	if _accumulator > step_interval:
+	if _accumulator >= step_interval:
 		_accumulator = 0.0
 	return steps

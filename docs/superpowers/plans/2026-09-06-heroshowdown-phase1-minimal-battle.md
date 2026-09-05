@@ -59,11 +59,12 @@ cd "G:/Zcode/project/HeroShowdown"
 ```gdscript
 
 func test_flushes_remainder_equal_to_interval():
-	# 封顶后残留恰好一个 interval 也应丢弃：否则下帧会连补 2 步
-	var s = FixedStepper.new(0.05, 3)
-	assert_eq(s.add_delta(3.05), 3)
+	# 封顶后残留恰好一个 interval 也应丢弃：否则下一帧 add_delta(0) 会连补 1 步
+	# （0.25/1.0 二进制精确，避免浮点噪声吃掉边界）
+	var s = FixedStepper.new(0.25, 3)
+	assert_eq(s.add_delta(1.0), 3)
 	assert_eq(s.add_delta(0.0), 0)
-	assert_eq(s.add_delta(0.05), 1)
+	assert_eq(s.add_delta(0.25), 1)
 ```
 
 - [ ] **Step 2: 跑测试确认失败**

@@ -9,8 +9,8 @@ const BattleSim = preload("res://src/core/battle_sim.gd")
 
 const TICKS_PER_SECOND := 20.0
 
-var _stepper = null
-var _sim = null
+var _stepper: FixedStepper = null
+var _sim: BattleSim = null
 var running := false
 
 func _ready() -> void:
