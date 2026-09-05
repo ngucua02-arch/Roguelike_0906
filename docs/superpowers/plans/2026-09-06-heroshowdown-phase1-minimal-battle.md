@@ -375,7 +375,7 @@ func test_ten_leaks_trigger_defeat():
 	assert_eq(sim.monsters.size(), 10)
 
 func test_defeat_locks_sim():
-	var sim = BattleSim.new({"total_spawns": 2, "hero_damage": 0})
+	var sim = BattleSim.new({"total_spawns": 1, "hero_damage": 0, "castle_hp": 1})
 	_run_to_end(sim)
 	assert_eq(sim.result, "defeat")
 	var frozen_tick: int = sim.tick_count
