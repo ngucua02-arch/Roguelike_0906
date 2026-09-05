@@ -64,6 +64,7 @@ func step() -> Array:
 	var events: Array = [{"type": Events.TICK, "data": {"tick": tick_count}}]
 	_step_spawn(events)
 	_step_move(events)
+	_step_attack(events)
 	_check_result(events)
 	return events
 
@@ -103,3 +104,35 @@ func _check_result(events: Array) -> void:
 	if _spawned >= _total_spawns and _resolved_count() >= _total_spawns:
 		result = "victory"
 		events.append({"type": Events.VICTORY, "data": {"castle_hp": castle_hp}})
+
+
+func _step_attack(events: Array) -> void:
+	hero.cooldown = maxf(0.0, hero.cooldown - DT)
+	if hero.cooldown > 0.0:
+		return  # 冷却中：不索敌不结算
+	var target = _nearest_monster_in_range()
+	if target == null:
+		return  # 无目标：冷却停在 0，目标进射程立即开火
+	var damage: int = maxi(0, hero.damage - target.def.armor)
+	target.hp -= damage
+	hero.cooldown = hero.attack_interval  # 释放成功才转 CD
+	events.append({"type": Events.ATTACK, "data": {"target_id": target.id, "damage": damage}})
+	events.append({"type": Events.HURT, "data": {"id": target.id, "hp": maxi(target.hp, 0), "damage": damage}})
+	if target.hp <= 0:
+		target.alive = false
+		events.append({"type": Events.MONSTER_DIED, "data": {"id": target.id}})
+
+func _nearest_monster_in_range():
+	var best = null
+	var best_d := INF
+	var hero_pos: Vector2 = grid.cell_to_pos(hero.cell)
+	for m in monsters:
+		if not m.alive:
+			continue
+		var d := hero_pos.distance_to(grid.point_at(m.path_dist))
+		if d < best_d:
+			best_d = d
+			best = m
+	if best == null or best_d > hero.range_tiles:
+		return null
+	return best
