@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EventDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/event_def.gd" id="1_ev"]
+
+[resource]
+script = ExtResource("1_ev")
+id = "gold_plus"
+title = "战备金款"
+desc = "立得金币 80"
+kind = "gold"
+value = 80

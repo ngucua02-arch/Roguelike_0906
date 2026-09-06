@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EventDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/event_def.gd" id="1_ev"]
+
+[resource]
+script = ExtResource("1_ev")
+id = "free_chest"
+title = "免费宝箱"
+desc = "随机金币 60~120，或本关全体攻击 +30%"
+kind = "chest"
+value = 0

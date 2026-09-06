@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/level_def.gd" id="1_lv"]
+
+[resource]
+script = ExtResource("1_lv")
+id = "level_1"
+display_name = "森林·初见"
+theme_color = Color(0.12, 0.25, 0.12, 1)
+hp_mult = 1.0
+waves = PackedStringArray("goblin:6:1.2", "goblin:6:1.0,wolf:3:1.5", "orc:6:1.6", "wolf:4:0.9,shaman:1:2.0,orc:4:1.6", "golem:3:3.0,shaman:2:2.0,orc:6:1.4", "orc:8:1.2,golem:2:3.0,shaman:2:2.0,ogre_lord:1:1.0")

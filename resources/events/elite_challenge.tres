@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EventDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/event_def.gd" id="1_ev"]
+
+[resource]
+script = ExtResource("1_ev")
+id = "elite_challenge"
+title = "精英挑战"
+desc = "本关怪物强度 +30%，胜利金币 ×2"
+kind = "elite"
+value = 30

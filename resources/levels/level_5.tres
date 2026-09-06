@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/level_def.gd" id="1_lv"]
+
+[resource]
+script = ExtResource("1_lv")
+id = "level_5"
+display_name = "堡垒·决战"
+theme_color = Color(0.18, 0.18, 0.2, 1)
+hp_mult = 1.7
+waves = PackedStringArray("goblin:16:0.95", "goblin:16:0.78,wolf:8:1.15", "orc:16:1.2", "wolf:10:0.7,shaman:3:1.5,orc:10:1.2", "golem:8:2.3,shaman:5:1.5,orc:16:1.05", "orc:21:0.9,golem:6:2.3,shaman:6:1.5,ogre_lord:2:2.0")

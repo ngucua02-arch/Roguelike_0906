@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/level_def.gd" id="1_lv"]
+
+[resource]
+script = ExtResource("1_lv")
+id = "level_4"
+display_name = "荒漠·沙暴"
+theme_color = Color(0.32, 0.2, 0.08, 1)
+hp_mult = 1.5
+waves = PackedStringArray("goblin:13:1.0", "goblin:13:0.85,wolf:7:1.2", "orc:14:1.3", "wolf:9:0.75,shaman:3:1.65,orc:9:1.3", "golem:7:2.5,shaman:5:1.65,orc:13:1.15", "orc:18:1.0,golem:5:2.5,shaman:5:1.65,ogre_lord:1:1.0")

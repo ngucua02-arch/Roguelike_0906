@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EventDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/event_def.gd" id="1_ev"]
+
+[resource]
+script = ExtResource("1_ev")
+id = "levelup"
+title = "英雄历练"
+desc = "随机一名英雄升 1 级（攻击 +30%）"
+kind = "levelup"
+value = 1
