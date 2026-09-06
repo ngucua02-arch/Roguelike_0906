@@ -34,8 +34,8 @@ func _ready() -> void:
 
 ## ---- 冒险流程 ----
 
-func restart_adventure() -> void:
-	run = RunState.new(0)
+func restart_adventure(seed_value := 0) -> void:
+	run = RunState.new(seed_value)
 	phase = "prep"
 	_begin_prep()
 

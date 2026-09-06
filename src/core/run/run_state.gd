@@ -4,7 +4,7 @@ extends RefCounted
 var level_index := 0            # 0 基
 var castle_hp := 10
 var castle_max := 10
-var gold := 100
+var gold := 120
 var attack_mult := 1.0          # 全局攻（永久）
 var interval_mult := 1.0        # 全局攻速（永久）
 var cd_mult := 1.0              # 技能 CD（永久）

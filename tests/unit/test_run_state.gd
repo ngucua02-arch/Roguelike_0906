@@ -58,7 +58,7 @@ func test_buff_events_apply():
 func test_gold_and_castle_events():
 	var rs = RunState.new(1)
 	rs.apply_event(_ev("gold_plus", "gold", 80))
-	assert_eq(rs.gold, 180)
+	assert_eq(rs.gold, 200)
 	rs.apply_event(_ev("castle_plus", "castle", 5))
 	assert_eq(rs.castle_hp, 15)
 	assert_eq(rs.castle_max, 15)
