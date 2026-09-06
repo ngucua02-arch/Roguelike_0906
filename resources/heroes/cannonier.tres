@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="HeroDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/hero_def.gd" id="1_hero"]
+
+[resource]
+script = ExtResource("1_hero")
+id = "cannonier"
+display_name = "炮手"
+cost = 140
+attack_damage = 32
+attack_interval = 2.2
+range_tiles = 4.5
+skill_name = "轰击"
+skill_kind = "barrage"
+skill_cooldown = 15.0
+skill_damage = 55
+skill_radius = 2.5

@@ -4,14 +4,14 @@
 
 [resource]
 script = ExtResource("1_hero")
-id = "swordsman"
-display_name = "剑士"
-cost = 60
-attack_damage = 12
-attack_interval = 0.8
-range_tiles = 1.5
-skill_name = "旋风斩"
-skill_kind = "whirl"
-skill_cooldown = 8.0
-skill_damage = 20
+id = "archer"
+display_name = "弓手"
+cost = 80
+attack_damage = 9
+attack_interval = 0.6
+range_tiles = 3.5
+skill_name = "箭雨"
+skill_kind = "arrow_rain"
+skill_cooldown = 12.0
+skill_damage = 24
 skill_radius = 1.5

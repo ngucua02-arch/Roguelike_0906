@@ -4,9 +4,14 @@
 
 [resource]
 script = ExtResource("1_mon")
-id = "goblin"
-display_name = "哥布林"
-max_hp = 30
-move_speed = 1.2
-armor = 0
-gold_drop = 3
+id = "ogre_lord"
+display_name = "巨魔王"
+max_hp = 800
+move_speed = 0.5
+armor = 6
+gold_drop = 50
+leak_damage = 3
+is_boss = true
+stomp_radius = 2.5
+stomp_interval = 6.0
+stomp_stun_duration = 2.0

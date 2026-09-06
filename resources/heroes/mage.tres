@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="HeroDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/hero_def.gd" id="1_hero"]
+
+[resource]
+script = ExtResource("1_hero")
+id = "mage"
+display_name = "法师"
+cost = 100
+attack_damage = 14
+attack_interval = 1.2
+range_tiles = 3.0
+skill_name = "冰环"
+skill_kind = "frost_ring"
+skill_cooldown = 10.0
+skill_damage = 12
+skill_radius = 2.0
+skill_slow_pct = 50
+skill_slow_duration = 3.0

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HeroDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/core/def/hero_def.gd" id="1_hero"]
+
+[resource]
+script = ExtResource("1_hero")
+id = "priest"
+display_name = "牧师"
+cost = 90
+attack_damage = 6
+attack_interval = 1.5
+range_tiles = 2.5
+skill_name = "圣盾"
+skill_kind = "aegis"
+skill_cooldown = 12.0
+skill_radius = 2.0
+skill_haste_pct = 30
+skill_duration = 4.0

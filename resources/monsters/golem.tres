@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_mon")
-id = "goblin"
-display_name = "哥布林"
-max_hp = 30
-move_speed = 1.2
-armor = 0
-gold_drop = 3
+id = "golem"
+display_name = "石魔"
+max_hp = 150
+move_speed = 0.6
+armor = 8
+gold_drop = 8

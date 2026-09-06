@@ -4,9 +4,12 @@
 
 [resource]
 script = ExtResource("1_mon")
-id = "goblin"
-display_name = "哥布林"
-max_hp = 30
-move_speed = 1.2
-armor = 0
-gold_drop = 3
+id = "shaman"
+display_name = "萨满"
+max_hp = 45
+move_speed = 0.9
+armor = 1
+gold_drop = 6
+heal_radius = 2.0
+heal_amount = 8
+heal_interval = 3.0
