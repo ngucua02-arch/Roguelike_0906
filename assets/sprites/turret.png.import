@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b82c6j5kimipp"
-path="res://.godot/imported/hero_priest.png-5ccecbd287fbea32b504f3c515da5f6b.ctex"
+uid="uid://cmf3o5r5xb28t"
+path="res://.godot/imported/turret.png-35fad344320f5bd37c6841a928939efa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/hero_priest.png"
-dest_files=["res://.godot/imported/hero_priest.png-5ccecbd287fbea32b504f3c515da5f6b.ctex"]
+source_file="res://assets/sprites/turret.png"
+dest_files=["res://.godot/imported/turret.png-35fad344320f5bd37c6841a928939efa.ctex"]
 
 [params]
 
