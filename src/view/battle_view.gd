@@ -50,7 +50,7 @@ func _draw() -> void:
 	if Game.battle_grid == null:
 		return
 	var grid = Game.battle_grid
-	draw_rect(Rect2(Vector2.ZERO, Vector2(960, 560)), Game.level_def.theme_color.darkened(0.72))
+	draw_rect(Rect2(Vector2.ZERO, Vector2(960, 560)), Game.level_def.theme_color.darkened(0.35))
 	var path_tex: Texture2D = Catalog.texture("path")
 	for c in grid.path_cells.keys():
 		if grid.in_bounds(c):

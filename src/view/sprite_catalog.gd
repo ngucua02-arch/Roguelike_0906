@@ -14,7 +14,17 @@ const MAP := {
 	"fx:spark": "res://assets/sprites/fx_spark.png",
 }
 
+static var _cache := {}
+
 static func texture(key: String) -> Texture2D:
-	if not MAP.has(key):
-		return null
-	return load(MAP[key])
+	if _cache.has(key):
+		return _cache[key]
+	var tex: Texture2D = null
+	if MAP.has(key):
+		var img := Image.load_from_file(MAP[key].replace("res://", "res://"))
+		if img == null:
+			img = Image.load_from_file(MAP[key])
+		if img != null:
+			tex = ImageTexture.create_from_image(img)
+	_cache[key] = tex
+	return tex
