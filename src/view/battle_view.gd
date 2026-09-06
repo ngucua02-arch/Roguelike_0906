@@ -41,6 +41,7 @@ func _draw() -> void:
 	for c in grid.path_cells.keys():
 		if grid.in_bounds(c):
 			draw_rect(Rect2(Vector2(c) * CELL, Vector2(CELL, CELL)), Color(0.35, 0.28, 0.18))
+	draw_rect(Rect2(Vector2.ZERO, Vector2(960, 560)), Game.level_def.theme_color.darkened(0.72))
 	draw_rect(Rect2(Vector2(Game.castle_cell) * CELL, Vector2(CELL, CELL)), Color(0.85, 0.7, 0.2))
 	var battle = Game.battle()
 	if battle == null:

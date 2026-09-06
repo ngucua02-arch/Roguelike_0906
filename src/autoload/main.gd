@@ -1,85 +1,107 @@
 extends Node2D
-## P2 主场景：战场渲染 + 完整 HUD 操作闭环。
-## 金币/波次/加速、买英雄（放置模式：点按钮→点格子）、英雄卡（技能/升攻/升速）、胜负提示。
+## P3 主场景：冒险阶段 UI——事件 3 选 1 / 备战 / 战斗 HUD / 结算与重开。
 
 const Events = preload("res://src/core/events.gd")
 const BattleView = preload("res://src/view/battle_view.gd")
 
+var _hud: Control
 var _gold_label: Label
 var _wave_label: Label
 var _msg_label: Label
 var _speed_btn: Button
-var _buy_buttons := {}      # def_id -> Button
+var _buy_buttons := {}
 var _cards_box: HBoxContainer
-var _cards := {}            # hero_id -> {skill: Button, dmg: Button, itv: Button}
-var _placing := ""          # 放置模式中的 def_id（空 = 非放置）
+var _cards := {}
+var _placing := ""
 var _castle_hp := 10
+
+var _overlay: Control
+var _overlay_title: Label
+var _overlay_body: Label
+var _event_btns: Array = []
+var _continue_btn: Button
+var _restart_btn: Button
 
 func _ready() -> void:
 	var view: Node2D = BattleView.new()
 	view.cell_clicked.connect(_on_cell_clicked)
 	add_child(view)
-
-	# 右侧信息栏（战场 768px 右侧留白）
-	_gold_label = _label(Vector2(784, 16), "金币: 100")
-	_wave_label = _label(Vector2(784, 40), "波次 -/-")
-	_speed_btn = _button(Vector2(784, 68), Vector2(170, 30), "加速 ×1", _on_speed)
-	_msg_label = _label(Vector2(16, 484), "点右侧买英雄，再点路径旁格子布阵")
-
-	# 买英雄面板
-	var sim = Game.battle()
-	var y := 104.0
-	for d in sim.hero_defs:
-		var b := _button(Vector2(784, y), Vector2(170, 30), "%s %d金" % [d.display_name, d.cost], _on_buy.bind(d.id))
-		_buy_buttons[d.id] = b
-		y += 36.0
-
-	# 英雄卡容器
-	_cards_box = HBoxContainer.new()
-	_cards_box.position = Vector2(16, 508)
-	_cards_box.size = Vector2(940, 48)
-	add_child(_cards_box)
-
+	_build_hud()
+	_build_overlay()
 	Game.event_emitted.connect(_on_event)
 
 func _process(_delta: float) -> void:
-	var sim = Game.battle()
-	if sim == null:
-		return
-	_gold_label.text = "金币: %d" % sim.gold
-	var ph: String = sim.director.phase
-	if ph == "break":
-		_wave_label.text = "休整 %.1f 秒" % sim.director.break_left
-	elif ph == "wave":
-		_wave_label.text = "波次 %d/%d" % [sim.director.index + 1, sim.director.wave_count()]
-	elif ph == "finished":
-		_wave_label.text = "战斗结束"
-	for hid in _cards.keys():
-		var card: Dictionary = _cards[hid]
-		for h in sim.heroes:
-			if h.id == hid:
-				var cd: float = h.skill_cd
-				card.skill.text = "%s %s" % [h.def.skill_name, ("%0.1f" % cd) if cd > 0.0 else "就绪"]
-				card.dmg.text = "升攻 40"
-				card.itv.text = "升速 40"
+	var ph: String = Game.phase
+	_hud.visible = ph == "prep" or ph == "battle"
+	_overlay.visible = not _hud.visible
+	match ph:
+		"event":
+			_overlay_title.text = "肉鸽事件（3 选 1）"
+			_overlay_body.text = "第 %d 关 %s 即将开始" % [Game.run.level_index + 1, Game.level_def.display_name]
+			_show_event_buttons()
+			_continue_btn.visible = false
+			_restart_btn.visible = false
+		"level_result":
+			_overlay_title.text = "第 %d 关守住！" % (Game.run.level_index + 1)
+			_overlay_body.text = "金币结余 %d，城堡 %d/%d\n点击继续：事件 → 备战" % [Game.run.gold, Game.run.castle_hp, Game.run.castle_max]
+			_hide_event_buttons()
+			_continue_btn.visible = true
+			_continue_btn.text = "继续冒险"
+			_restart_btn.visible = false
+		"adventure_win":
+			_overlay_title.text = "冒险通关！"
+			_overlay_body.text = "总击杀 %d · 城堡 %d/%d · 用时 %s" % [Game.run.kills_total, Game.run.castle_hp, Game.run.castle_max, _fmt_time(Game.run.ticks_total)]
+			_hide_event_buttons()
+			_continue_btn.visible = false
+			_restart_btn.visible = true
+		"adventure_lose":
+			_overlay_title.text = "冒险失败……"
+			_overlay_body.text = "倒在第 %d 关 · 总击杀 %d · 用时 %s" % [Game.run.level_index + 1, Game.run.kills_total, _fmt_time(Game.run.ticks_total)]
+			_hide_event_buttons()
+			_continue_btn.visible = false
+			_restart_btn.visible = true
+		"prep":
+			_msg_label.text = "备战：买好英雄点【开战】" if _placing == "" else "放置模式：点击路径旁格子"
+		"battle":
+			_gold_label.text = "金币: %d" % Game.battle().gold
+			var d = Game.battle().director
+			_wave_label.text = "波次 %d/%d" % [d.index + 1, d.wave_count()] if d.phase == "wave" else "波间休整 %.1f 秒" % d.break_left
+			_refresh_cards()
+
+func _show_event_buttons() -> void:
+	for i in 3:
+		var d = Game.event_choices[i]
+		_event_btns[i].visible = true
+		_event_btns[i].text = "%s\n%s" % [d.title, d.desc]
+
+func _hide_event_buttons() -> void:
+	for b in _event_btns:
+		b.visible = false
+
+func _on_pick_event(i: int) -> void:
+	Game.pick_event(i)
+
+func _on_continue() -> void:
+	Game.continue_to_event()
+
+func _on_restart() -> void:
+	Game.restart_adventure()
+
+func _fmt_time(ticks: int) -> String:
+	var sec := int(ticks / 20.0)
+	return "%d:%02d" % [sec / 60, sec % 60]
 
 func _on_event(event: Dictionary) -> void:
 	match event.type:
 		Events.LEAK:
 			_castle_hp = event.data.castle_hp
 			_msg_label.text = "漏怪！城堡 HP: %d" % _castle_hp
-		Events.VICTORY:
-			_msg_label.text = "胜利！城堡 HP %d——P2 完成" % event.data.castle_hp
-		Events.DEFEAT:
-			_msg_label.text = "冒险失败……"
 		Events.BUY_FAILED:
 			_msg_label.text = "操作失败: %s" % event.data.get("reason", "")
 			if event.data.get("reason", "") == "no_gold":
 				_placing = ""
 		Events.DEPLOYED:
 			_placing = ""
-			_rebuild_cards()
-		Events.UPGRADED:
 			_rebuild_cards()
 
 func _on_cell_clicked(cell: Vector2i) -> void:
@@ -97,8 +119,19 @@ func _on_speed() -> void:
 func _on_skill(hero_id: int) -> void:
 	Game.request_skill(hero_id)
 
-func _on_upgrade(hero_id: int, stat: String) -> void:
-	Game.request_upgrade(hero_id, stat)
+func _on_start_battle() -> void:
+	Game.start_battle_phase()
+
+func _refresh_cards() -> void:
+	var sim = Game.battle()
+	if sim == null:
+		return
+	for hid in _cards.keys():
+		var card: Dictionary = _cards[hid]
+		for h in sim.heroes:
+			if h.id == hid:
+				var cd: float = h.skill_cd
+				card.skill.text = "%s %s" % [h.def.skill_name, ("%0.1f" % cd) if cd > 0.0 else "就绪"]
 
 func _rebuild_cards() -> void:
 	for c in _cards_box.get_children():
@@ -126,18 +159,81 @@ func _rebuild_cards() -> void:
 		_cards_box.add_child(card)
 		_cards[h.id] = {"skill": skill, "dmg": dmg, "itv": itv}
 
-func _label(pos: Vector2, text: String) -> Label:
+func _on_upgrade(hero_id: int, stat: String) -> void:
+	Game.request_upgrade(hero_id, stat)
+
+func _build_hud() -> void:
+	_hud = Control.new()
+	add_child(_hud)
+	_gold_label = _label(_hud, Vector2(784, 16), "金币: 100")
+	_wave_label = _label(_hud, Vector2(784, 40), "备战中")
+	_speed_btn = _button(_hud, Vector2(784, 68), Vector2(170, 30), "加速 ×1", _on_speed)
+	var start_btn := _button(_hud, Vector2(784, 104), Vector2(170, 36), "开 战", _on_start_battle)
+	start_btn.add_theme_font_size_override("font_size", 18)
+	_msg_label = _label(_hud, Vector2(16, 484), "备战：买英雄→点格子布阵")
+	var sim = Game.battle()
+	var y := 146.0
+	for d in sim.hero_defs:
+		_buy_buttons[d.id] = _button(_hud, Vector2(784, y), Vector2(170, 30), "%s %d金" % [d.display_name, d.cost], _on_buy.bind(d.id))
+		y += 36.0
+	_cards_box = HBoxContainer.new()
+	_cards_box.position = Vector2(16, 508)
+	_cards_box.size = Vector2(940, 48)
+	_hud.add_child(_cards_box)
+	_rebuild_cards()
+
+func _build_overlay() -> void:
+	_overlay = Control.new()
+	add_child(_overlay)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.size = Vector2(960, 560)
+	_overlay.add_child(dim)
+	_overlay_title = Label.new()
+	_overlay_title.position = Vector2(0, 120)
+	_overlay_title.size = Vector2(960, 40)
+	_overlay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_overlay_title.add_theme_font_size_override("font_size", 26)
+	_overlay.add_child(_overlay_title)
+	_overlay_body = Label.new()
+	_overlay_body.position = Vector2(0, 170)
+	_overlay_body.size = Vector2(960, 60)
+	_overlay_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_overlay.add_child(_overlay_body)
+	for i in 3:
+		var b := Button.new()
+		b.position = Vector2(110 + i * 260, 260)
+		b.size = Vector2(240, 90)
+		b.visible = false
+		b.pressed.connect(_on_pick_event.bind(i))
+		_overlay.add_child(b)
+		_event_btns.append(b)
+	_continue_btn = Button.new()
+	_continue_btn.position = Vector2(400, 400)
+	_continue_btn.size = Vector2(160, 40)
+	_continue_btn.visible = false
+	_continue_btn.pressed.connect(_on_continue)
+	_overlay.add_child(_continue_btn)
+	_restart_btn = Button.new()
+	_restart_btn.position = Vector2(400, 400)
+	_restart_btn.size = Vector2(160, 40)
+	_restart_btn.text = "重新开始"
+	_restart_btn.visible = false
+	_restart_btn.pressed.connect(_on_restart)
+	_overlay.add_child(_restart_btn)
+
+func _label(parent: Control, pos: Vector2, text: String) -> Label:
 	var l := Label.new()
 	l.position = pos
 	l.text = text
-	add_child(l)
+	parent.add_child(l)
 	return l
 
-func _button(pos: Vector2, size: Vector2, text: String, handler: Callable) -> Button:
+func _button(parent: Control, pos: Vector2, size: Vector2, text: String, handler: Callable) -> Button:
 	var b := Button.new()
 	b.position = pos
 	b.size = size
 	b.text = text
 	b.pressed.connect(handler)
-	add_child(b)
+	parent.add_child(b)
 	return b
