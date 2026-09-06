@@ -48,4 +48,4 @@ func test_last_wave_finishes():
 	var r: Dictionary = d.announce_clear()
 	assert_true(r.is_last)
 	assert_true(d.is_finished())
-	assert_eq(d.current_bonus(), 30)  # 20 + 5×2
+	assert_eq(d.current_bonus(), 55)  # 35 + 10×2

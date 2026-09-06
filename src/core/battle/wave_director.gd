@@ -18,7 +18,7 @@ func wave_count() -> int:
 	return waves.size()
 
 func current_bonus() -> int:
-	return 20 + 5 * (index + 1)
+	return 35 + 10 * (index + 1)
 
 func start_next_wave() -> void:
 	index += 1
