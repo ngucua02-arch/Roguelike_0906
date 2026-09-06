@@ -3,6 +3,8 @@ extends RefCounted
 ## cast 成功返回事件数组（含 skill_cast），失败返回 []（由 sim 发 skill_failed）。
 ## 伤害统一走 sim.apply_damage（护甲/死亡/事件复用）。
 
+const Events = preload("res://src/core/events.gd")
+
 static func cast(sim, hero) -> Array:
 	var def: Resource = hero.def
 	if def.skill_kind == "":
@@ -27,10 +29,10 @@ static func cast(sim, hero) -> Array:
 				if ally.cell.distance_to(hero.cell) <= def.skill_radius:
 					ally.haste_timer = maxf(ally.haste_timer, def.skill_duration)
 					ally.aegis_timer = maxf(ally.aegis_timer, def.skill_duration)
-					events.append({"type": "hasted", "data": {"hero_id": ally.id, "duration": def.skill_duration}})
+					events.append({"type": Events.HASTED, "data": {"hero_id": ally.id, "duration": def.skill_duration}})
 		_:
 			return []
-	events.push_front({"type": "skill_cast", "data": {"hero_id": hero.id, "kind": def.skill_kind}})
+	events.push_front({"type": Events.SKILL_CAST, "data": {"hero_id": hero.id, "kind": def.skill_kind}})
 	return events
 
 static func _sim_target(sim, hero):
@@ -56,4 +58,4 @@ static func _slow_around(sim, center: Vector2, def: Resource, events: Array) -> 
 		if center.distance_to(sim.grid.point_at(m.path_dist)) <= def.skill_radius:
 			m.slow_timer = maxf(m.slow_timer, def.skill_slow_duration)
 			m.slow_factor = 1.0 - def.skill_slow_pct / 100.0
-			events.append({"type": "slowed", "data": {"id": m.id, "duration": def.skill_slow_duration}})
+			events.append({"type": Events.SLOWED, "data": {"id": m.id, "duration": def.skill_slow_duration}})
