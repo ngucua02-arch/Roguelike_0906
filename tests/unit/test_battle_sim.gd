@@ -194,3 +194,47 @@ func test_default_config_defenseless_falls_mid_waves():
 	assert_eq(sim.result, "defeat")
 	assert_eq(waves_started, 2)
 	assert_eq(sim.castle_hp, 0)  # 归零即判负
+
+func test_roster_predeploy_free_with_levels():
+	var cfg := _mini_config({
+		"roster": [{"def_id": "swordsman", "cell": Vector2i(12, 2), "level": 2, "damage_mult": 1.3, "interval_mult": 1.0}],
+	})
+	var sim = BattleSim.new(cfg)
+	assert_eq(sim.heroes.size(), 1)
+	assert_eq(sim.heroes[0].level, 2)
+	assert_eq(sim.heroes[0].damage(), 16)  # round(12×1.3)
+	assert_eq(sim.gold, 100)               # 预部署不扣费
+
+func test_global_mults_apply():
+	var cfg := _mini_config({
+		"hero_defs": [_hero_def("swordsman", 12, 50, "whirl")],
+		"attack_mult": 1.2,
+		"interval_mult": 0.5,
+		"cd_mult": 0.5,
+		"waves": [{"groups": [{"def_id": "goblin", "count": 1, "interval": 0.5}]}],
+	})
+	var sim = BattleSim.new(cfg)
+	sim.try_deploy("swordsman", Vector2i(12, 2))
+	assert_eq(sim.heroes[0].damage(), 14)                     # round(12×1.2)=round(14.4)
+	assert_almost_eq(sim.heroes[0].attack_interval(), 0.4, 0.001)
+	for i in 40:
+		sim.step()
+	sim.try_skill(sim.heroes[0].id)
+	assert_almost_eq(sim.heroes[0].skill_cd, 0.5, 0.001)      # 1.0×cd_mult
+
+func test_monster_hp_mult_and_gold_mult_and_kill_count():
+	var cfg := _mini_config({
+		"hero_defs": [],
+		"monster_defs": [_mon_def("goblin", 30, 0.5, 0, 3)],
+		"waves": [{"groups": [{"def_id": "goblin", "count": 1, "interval": 0.1}]}],
+		"monster_hp_mult": 2.0,
+		"gold_mult": 2.0,
+	})
+	var sim = BattleSim.new(cfg)
+	for i in 3:
+		sim.step()
+	assert_eq(sim.monsters[0].hp, 60)      # 30×2
+	assert_eq(sim.monsters[0].max_hp, 60)
+	sim.apply_damage(sim.monsters[0], 60, [])
+	assert_eq(sim.kill_count, 1)
+	assert_eq(sim.gold, 106)               # 100 + 3×2

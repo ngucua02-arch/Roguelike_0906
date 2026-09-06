@@ -35,6 +35,13 @@ var gold: int:
 	get:
 		return economy.gold
 
+var attack_mult := 1.0
+var interval_mult := 1.0
+var cd_mult := 1.0
+var gold_mult := 1.0
+var monster_hp_mult := 1.0
+var kill_count := 0
+
 var _next_hero_id := 1
 var _next_monster_id := 1
 var _occupied := {}           # Vector2i -> Hero
@@ -48,6 +55,24 @@ func _init(config: Dictionary = {}) -> void:
 	for d in config.get("monster_defs", DefaultDefs.monsters()):
 		monster_def_by_id[d.id] = d
 	director = WaveDirector.new(config.get("waves", DefaultDefs.waves()))
+	attack_mult = config.get("attack_mult", 1.0)
+	interval_mult = config.get("interval_mult", 1.0)
+	cd_mult = config.get("cd_mult", 1.0)
+	gold_mult = config.get("gold_mult", 1.0)
+	monster_hp_mult = config.get("monster_hp_mult", 1.0)
+	for r in config.get("roster", []):
+		var def0 = _hero_def_by_id(r.def_id)
+		if def0 == null:
+			continue
+		var h0 = Entities.Hero.new(_next_hero_id, def0, r.cell)
+		_next_hero_id += 1
+		h0.level = r.level
+		h0.damage_mult = r.damage_mult
+		h0.interval_mult = r.interval_mult
+		h0.global_damage_mult = attack_mult
+		h0.global_interval_mult = interval_mult
+		heroes.append(h0)
+		_occupied[r.cell] = h0
 	director.start_next_wave()  # 开局即第一波
 
 func step() -> Array:
@@ -90,6 +115,8 @@ func try_deploy(def_id: String, cell: Vector2i) -> Array:
 	economy.spend(def.cost)
 	var h = Entities.Hero.new(_next_hero_id, def, cell)
 	_next_hero_id += 1
+	h.global_damage_mult = attack_mult
+	h.global_interval_mult = interval_mult
 	heroes.append(h)
 	_occupied[cell] = h
 	events.append({"type": Events.DEPLOYED, "data": {"hero_id": h.id, "def_id": def_id, "cell": cell}})
@@ -136,7 +163,7 @@ func try_skill(hero_id: int) -> Array:
 	if ev.is_empty():
 		events.append({"type": Events.SKILL_FAILED, "data": {"hero_id": hero_id, "reason": "no_target"}})
 		return events
-	h.skill_cd = h.def.skill_cooldown  # 释放成功才转 CD
+	h.skill_cd = h.def.skill_cooldown * cd_mult  # 释放成功才转 CD
 	return ev
 
 # ---- 规则步进 ----
@@ -145,7 +172,7 @@ func _spawn(def_id: String, events: Array) -> void:
 	var def = monster_def_by_id.get(def_id)
 	if def == null:
 		return
-	var m = Entities.Monster.new(_next_monster_id, def)
+	var m = Entities.Monster.new(_next_monster_id, def, monster_hp_mult)
 	_next_monster_id += 1
 	monsters.append(m)
 	events.append({"type": Events.SPAWN, "data": {"id": m.id, "def_id": def_id, "pos": grid.point_at(m.path_dist)}})
@@ -189,8 +216,8 @@ func _step_traits(events: Array) -> void:
 				m.heal_timer += m.def.heal_interval
 				var mp: Vector2 = grid.point_at(m.path_dist)
 				for t in monsters:
-					if t.alive and t.hp < t.def.max_hp and mp.distance_to(grid.point_at(t.path_dist)) <= m.def.heal_radius:
-						t.hp = mini(t.def.max_hp, t.hp + m.def.heal_amount)
+					if t.alive and t.hp < t.max_hp and mp.distance_to(grid.point_at(t.path_dist)) <= m.def.heal_radius:
+						t.hp = mini(t.max_hp, t.hp + m.def.heal_amount)
 						events.append({"type": Events.HEALED, "data": {"id": t.id, "hp": t.hp}})
 		if m.def.stomp_radius > 0.0:
 			m.stomp_timer -= DT
@@ -223,9 +250,11 @@ func apply_damage(m, dmg: int, events: Array) -> void:
 	events.append({"type": Events.HURT, "data": {"id": m.id, "hp": maxi(m.hp, 0), "damage": real}})
 	if m.hp <= 0 and m.alive:
 		m.alive = false
+		kill_count += 1
 		events.append({"type": Events.MONSTER_DIED, "data": {"id": m.id}})
-		economy.gain(m.def.gold_drop)
-		events.append({"type": Events.GOLD_GAINED, "data": {"amount": m.def.gold_drop, "total": economy.gold, "reason": "kill"}})
+		var drop: int = int(ceil(m.def.gold_drop * gold_mult))
+		economy.gain(drop)
+		events.append({"type": Events.GOLD_GAINED, "data": {"amount": drop, "total": economy.gold, "reason": "kill"}})
 
 func _alive_count() -> int:
 	var n := 0
