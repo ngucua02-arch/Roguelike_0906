@@ -14,6 +14,10 @@ var _cards_box: HBoxContainer
 var _cards := {}
 var _placing := ""
 var _castle_hp := 10
+var _hp_bar: ProgressBar
+var _banner: Label
+var _banner_age := 0.0
+var _view: Node2D
 
 var _overlay: Control
 var _overlay_title: Label
@@ -26,14 +30,23 @@ func _ready() -> void:
 	var view: Node2D = BattleView.new()
 	view.cell_clicked.connect(_on_cell_clicked)
 	add_child(view)
+	_view = view
 	_build_hud()
 	_build_overlay()
 	Game.event_emitted.connect(_on_event)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var ph: String = Game.phase
 	_hud.visible = ph == "prep" or ph == "battle"
 	_overlay.visible = not _hud.visible
+	_view.place_mode = _placing != "" and ph == "prep"
+	_hp_bar.max_value = Game.run.castle_max
+	_hp_bar.value = _castle_hp
+	if _banner.visible:
+		_banner_age += delta
+		_banner.modulate.a = clampf(2.2 - _banner_age, 0.0, 1.0)
+		if _banner_age > 2.2:
+			_banner.visible = false
 	match ph:
 		"event":
 			_overlay_title.text = "肉鸽事件（3 选 1）"
@@ -121,6 +134,9 @@ func _on_skill(hero_id: int) -> void:
 
 func _on_start_battle() -> void:
 	Game.start_battle_phase()
+	_banner.text = "第 %d 关 · %s" % [Game.run.level_index + 1, Game.level_def.display_name]
+	_banner.visible = true
+	_banner_age = 0.0
 
 func _refresh_cards() -> void:
 	var sim = Game.battle()
@@ -165,6 +181,34 @@ func _on_upgrade(hero_id: int, stat: String) -> void:
 func _build_hud() -> void:
 	_hud = Control.new()
 	add_child(_hud)
+	_hp_bar = ProgressBar.new()
+	_hp_bar.position = Vector2(16, 10)
+	_hp_bar.size = Vector2(220, 20)
+	_hp_bar.show_percentage = false
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0.08, 0.09, 0.12)
+	bg.set_corner_radius_all(5)
+	var fg := StyleBoxFlat.new()
+	fg.bg_color = Color(0.9, 0.55, 0.25)
+	fg.set_corner_radius_all(5)
+	_hp_bar.add_theme_stylebox_override("background", bg)
+	_hp_bar.add_theme_stylebox_override("fill", fg)
+	_hud.add_child(_hp_bar)
+	var hp_text := Label.new()
+	hp_text.position = Vector2(24, 11)
+	hp_text.text = "城堡"
+	hp_text.add_theme_font_size_override("font_size", 12)
+	_hud.add_child(hp_text)
+	_banner = Label.new()
+	_banner.position = Vector2(0, 200)
+	_banner.size = Vector2(960, 60)
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.add_theme_font_size_override("font_size", 34)
+	_banner.add_theme_color_override("font_color", Color(1, 0.95, 0.8))
+	_banner.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_banner.add_theme_constant_override("outline_size", 8)
+	_banner.visible = false
+	_hud.add_child(_banner)
 	_gold_label = _label(_hud, Vector2(784, 16), "金币: 100")
 	_wave_label = _label(_hud, Vector2(784, 40), "备战中")
 	_speed_btn = _button(_hud, Vector2(784, 68), Vector2(170, 30), "加速 ×1", _on_speed)
@@ -235,5 +279,15 @@ func _button(parent: Control, pos: Vector2, size: Vector2, text: String, handler
 	b.size = size
 	b.text = text
 	b.pressed.connect(handler)
+	for state in ["normal", "hover", "pressed"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.13, 0.15, 0.2) if state == "normal" else (Color(0.2, 0.25, 0.34) if state == "hover" else Color(0.09, 0.11, 0.15))
+		sb.set_corner_radius_all(6)
+		sb.set_border_width_all(1)
+		sb.border_color = Color(0.38, 0.58, 0.92) if state == "hover" else Color(0.27, 0.3, 0.38)
+		b.add_theme_stylebox_override(state, sb)
+	b.add_theme_color_override("font_color", Color(0.92, 0.94, 1.0))
+	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	b.add_theme_color_override("font_pressed_color", Color(0.7, 0.8, 1.0))
 	parent.add_child(b)
 	return b

@@ -13,6 +13,7 @@ var _mon_pos := {}     # id -> Vector2（格单位）
 var _mon_def := {}     # id -> def_id
 var _slowed := {}      # id -> true（受减速后短暂显示蓝圈）
 var _fx: Node2D
+var place_mode := false  # 布阵模式：合法格高亮
 
 func _ready() -> void:
 	Game.event_emitted.connect(_on_event)
@@ -58,6 +59,26 @@ func _draw() -> void:
 				draw_texture_rect(path_tex, Rect2(Vector2(c) * CELL, Vector2(CELL, CELL)), false)
 			else:
 				draw_rect(Rect2(Vector2(c) * CELL, Vector2(CELL, CELL)), Color(0.35, 0.28, 0.18))
+	if place_mode:
+		var occupied := {}
+		var b = Game.battle()
+		if b != null:
+			for h in b.heroes:
+				occupied[h.cell] = true
+		for yy in grid.height:
+			for xx in grid.width:
+				var c := Vector2i(xx, yy)
+				if grid.is_path(c) or occupied.has(c):
+					continue
+				var near_path := false
+				for off in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					if grid.is_path(c + off):
+						near_path = true
+						break
+				if near_path:
+					var r := Rect2(Vector2(c) * CELL + Vector2(3, 3), Vector2(CELL - 6, CELL - 6))
+					draw_rect(r, Color(0.3, 1.0, 0.4, 0.16))
+					draw_rect(r, Color(0.4, 1.0, 0.5, 0.7), false, 2.0)
 	for x in grid.width + 1:
 		draw_line(Vector2(x, 0) * CELL, Vector2(x, grid.height) * CELL, Color(0, 0, 0, 0.18))
 	for y in grid.height + 1:
