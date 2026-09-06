@@ -1,28 +1,37 @@
 extends Node2D
-## P2 战场渲染（最糙版）：网格/路径/城堡/英雄/怪物色块 + 点击格子信号（布阵用）。
-## 只消费 Game 的事件与只读状态，不改规则层状态。
+## P4 战场渲染：Kenney 素材单位/路面/城堡 + 主题底色 + 布阵点击。
+## 素材缺失自动回退色块。只消费 Game 的事件与只读状态，不改规则层状态。
 
 signal cell_clicked(cell: Vector2i)
 
 const Events = preload("res://src/core/events.gd")
+const Catalog = preload("res://src/view/sprite_catalog.gd")
+const FxScript = preload("res://src/view/fx.gd")
 const CELL := 48
 
-var _monster_pos := {}   # id -> Vector2（格单位）
-var _monster_boss := {}  # id -> bool
+var _mon_pos := {}     # id -> Vector2（格单位）
+var _mon_def := {}     # id -> def_id
+var _slowed := {}      # id -> true（受减速后短暂显示蓝圈）
+var _fx: Node2D
 
 func _ready() -> void:
 	Game.event_emitted.connect(_on_event)
+	_fx = FxScript.new()
+	add_child(_fx)
 
 func _on_event(event: Dictionary) -> void:
 	match event.type:
 		Events.SPAWN:
-			_monster_pos[event.data.id] = event.data.pos
-			_monster_boss[event.data.id] = event.data.get("def_id", "") == "ogre_lord"
+			_mon_pos[event.data.id] = event.data.pos
+			_mon_def[event.data.id] = event.data.get("def_id", "")
 		Events.MOVE:
-			_monster_pos[event.data.id] = event.data.pos
+			_mon_pos[event.data.id] = event.data.pos
 		Events.LEAK, Events.MONSTER_DIED:
-			_monster_pos.erase(event.data.id)
-			_monster_boss.erase(event.data.id)
+			_mon_pos.erase(event.data.id)
+			_mon_def.erase(event.data.id)
+			_slowed.erase(event.data.id)
+		Events.SLOWED:
+			_slowed[event.data.id] = true
 	queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -30,27 +39,50 @@ func _unhandled_input(event: InputEvent) -> void:
 		var cell := Vector2i((get_global_mouse_position() / CELL).floor())
 		cell_clicked.emit(cell)
 
+func _draw_tex(key: String, center: Vector2, size: float, tint := Color.WHITE) -> bool:
+	var tex: Texture2D = Catalog.texture(key)
+	if tex == null:
+		return false
+	draw_texture_rect(tex, Rect2(center - Vector2(size, size) / 2.0, Vector2(size, size)), false, tint)
+	return true
+
 func _draw() -> void:
 	if Game.battle_grid == null:
 		return
 	var grid = Game.battle_grid
-	for x in grid.width + 1:
-		draw_line(Vector2(x, 0) * CELL, Vector2(x, grid.height) * CELL, Color(0.22, 0.22, 0.24))
-	for y in grid.height + 1:
-		draw_line(Vector2(0, y) * CELL, Vector2(grid.width, y) * CELL, Color(0.22, 0.22, 0.24))
+	draw_rect(Rect2(Vector2.ZERO, Vector2(960, 560)), Game.level_def.theme_color.darkened(0.72))
+	var path_tex: Texture2D = Catalog.texture("path")
 	for c in grid.path_cells.keys():
 		if grid.in_bounds(c):
-			draw_rect(Rect2(Vector2(c) * CELL, Vector2(CELL, CELL)), Color(0.35, 0.28, 0.18))
-	draw_rect(Rect2(Vector2.ZERO, Vector2(960, 560)), Game.level_def.theme_color.darkened(0.72))
-	draw_rect(Rect2(Vector2(Game.castle_cell) * CELL, Vector2(CELL, CELL)), Color(0.85, 0.7, 0.2))
+			if path_tex != null:
+				draw_texture_rect(path_tex, Rect2(Vector2(c) * CELL, Vector2(CELL, CELL)), false)
+			else:
+				draw_rect(Rect2(Vector2(c) * CELL, Vector2(CELL, CELL)), Color(0.35, 0.28, 0.18))
+	for x in grid.width + 1:
+		draw_line(Vector2(x, 0) * CELL, Vector2(x, grid.height) * CELL, Color(0, 0, 0, 0.18))
+	for y in grid.height + 1:
+		draw_line(Vector2(0, y) * CELL, Vector2(grid.width, y) * CELL, Color(0, 0, 0, 0.18))
+	# 城堡
+	var castle_px: Vector2 = Vector2(Game.castle_cell) * CELL + Vector2(CELL / 2.0, CELL / 2.0)
+	if not _draw_tex("castle", castle_px, CELL - 2.0):
+		draw_rect(Rect2(Vector2(Game.castle_cell) * CELL, Vector2(CELL, CELL)), Color(0.85, 0.7, 0.2))
+	# 英雄与怪物
 	var battle = Game.battle()
-	if battle == null:
-		return
-	for h in battle.heroes:
-		var p: Vector2 = Vector2(h.cell) * CELL + Vector2(CELL / 2.0, CELL / 2.0)
-		draw_circle(p, 16.0, Color(0.3, 0.55, 1.0) if h.stun_timer <= 0.0 else Color(0.4, 0.4, 0.45))
-		draw_string(ThemeDB.fallback_font, p + Vector2(-24, -20), "%s Lv%d" % [h.def.display_name, h.level], HORIZONTAL_ALIGNMENT_LEFT, -1, 10)
-	for id in _monster_pos.keys():
-		var r := 18.0 if _monster_boss.get(id, false) else 12.0
-		var col := Color(0.75, 0.15, 0.6) if _monster_boss.get(id, false) else Color(0.85, 0.25, 0.2)
-		draw_circle(_monster_pos[id] * CELL, r, col)
+	if battle != null:
+		var font := ThemeDB.fallback_font
+		for h in battle.heroes:
+			var hp: Vector2 = Vector2(h.cell) * CELL + Vector2(CELL / 2.0, CELL / 2.0)
+			var tint := Color.WHITE if h.stun_timer <= 0.0 else Color(0.45, 0.45, 0.5)
+			if not _draw_tex("hero:" + h.def.id, hp, CELL - 4.0, tint):
+				draw_circle(hp, 16.0, Color(0.3, 0.55, 1.0) * tint)
+			draw_string(font, hp + Vector2(-26, -22), "%s Lv%d" % [h.def.display_name, h.level], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(1, 1, 1, 0.9))
+		for id in _mon_pos.keys():
+			var def_id: String = _mon_def.get(id, "")
+			var boss := def_id == "ogre_lord"
+			var size := 44.0 if boss else 34.0
+			var mp: Vector2 = _mon_pos[id] * CELL
+			var mtint := Color(0.6, 0.8, 1.0) if _slowed.has(id) else Color.WHITE
+			if not _draw_tex("mon:" + def_id, mp, size, mtint):
+				draw_circle(mp, 12.0, Color(0.85, 0.25, 0.2) * mtint)
+			if _slowed.has(id):
+				draw_arc(mp, size / 2.0 + 2.0, 0, TAU, 24, Color(0.4, 0.8, 1.0, 0.8), 2.0)
