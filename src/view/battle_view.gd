@@ -17,6 +17,7 @@ var place_mode := false  # 布阵模式：合法格高亮
 
 func _ready() -> void:
 	Game.event_emitted.connect(_on_event)
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST  # 像素风锐利
 	_fx = FxScript.new()
 	add_child(_fx)
 
@@ -94,8 +95,7 @@ func _draw() -> void:
 		for h in battle.heroes:
 			var hp: Vector2 = Vector2(h.cell) * CELL + Vector2(CELL / 2.0, CELL / 2.0)
 			var tint := Color.WHITE if h.stun_timer <= 0.0 else Color(0.45, 0.45, 0.5)
-			var hcol: Color = {"swordsman": Color(0.6, 0.8, 1.0), "archer": Color(0.7, 1.0, 0.7), "mage": Color(0.75, 0.65, 1.0), "cannonier": Color(1.0, 0.6, 0.5), "priest": Color(1.0, 0.95, 0.6)}.get(h.def.id, Color.WHITE)
-			if not _draw_tex("hero", hp, CELL - 4.0, hcol * tint):
+			if not _draw_tex("hero:" + h.def.id, hp, CELL - 4.0, tint):
 				draw_circle(hp, 16.0, Color(0.3, 0.55, 1.0) * tint)
 			draw_string(font, hp + Vector2(-26, -22), "%s Lv%d" % [h.def.display_name, h.level], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(1, 1, 1, 0.9))
 		for id in _mon_pos.keys():

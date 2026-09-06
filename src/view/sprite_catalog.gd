@@ -9,7 +9,11 @@ const MAP := {
 	"mon:shaman": "res://assets/sprites/mon_shaman.png",
 	"mon:golem": "res://assets/sprites/mon_golem.png",
 	"mon:ogre_lord": "res://assets/sprites/mon_ogre_lord.png",
-	"hero": "res://assets/sprites/turret.png",
+	"hero:swordsman": "res://assets/sprites/hero_swordsman.png",
+	"hero:archer": "res://assets/sprites/hero_archer.png",
+	"hero:mage": "res://assets/sprites/hero_mage.png",
+	"hero:cannonier": "res://assets/sprites/hero_cannonier.png",
+	"hero:priest": "res://assets/sprites/hero_priest.png",
 	"path": "res://assets/sprites/path.png",
 	"fx:spark": "res://assets/sprites/fx_spark.png",
 }
