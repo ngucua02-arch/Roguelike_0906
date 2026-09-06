@@ -38,7 +38,7 @@ func test_draw_is_deterministic_with_same_seed():
 func test_draw_no_duplicates_and_skips_used():
 	var rs = RunState.new(7)
 	var got := []
-	for i in 3:
+	for i in 2:  # 池共 8 个：抽 2 轮×3，留 2 个给第三轮
 		for d in rs.draw_events(_pool(), 3):
 			got.append(d.id)
 			rs.apply_event(d)
