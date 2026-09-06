@@ -35,7 +35,8 @@ func test_announce_clear_then_break_auto_next():
 	var spawns: Array = d.tick(0.1)  # 休整结束自动进第二波
 	assert_eq(d.phase, "wave")
 	assert_eq(d.index, 1)
-	assert_eq(spawns, ["orc"])  # 第二波 orc 组 timer 0.5 首只立刻
+	assert_eq(spawns.size(), 0)      # 首只 orc 在其 interval 0.5s 后
+	assert_eq(d.tick(0.5), ["orc"])
 
 func test_last_wave_finishes():
 	var d = WaveDirector.new(_waves())
